@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
@@ -17,8 +18,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.weatherapp.model.WeatherResponse
 import com.example.weatherapp.utils.Constants
 import com.google.android.gms.location.*
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
 
@@ -97,13 +104,7 @@ class MainActivity : AppCompatActivity() {
             object : LocationCallback() {
                 override fun onLocationResult(p0: LocationResult) {
                     super.onLocationResult(p0)
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Latitude: ${p0.lastLocation?.latitude}\nLongitude: ${p0.lastLocation?.longitude}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    getLocationWeatherDetails()
+                    getLocationWeatherDetails(p0.lastLocation?.latitude!!, p0.lastLocation?.longitude!!)
                 }
 
             },
@@ -111,9 +112,37 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun getLocationWeatherDetails(){
+    private fun getLocationWeatherDetails(latitude: Double, longitude: Double){
         if(Constants.isNetworkAvailable(this)){
-            Toast.makeText(this@MainActivity, "Network Connection Available", Toast.LENGTH_SHORT).show()
+            val retroFit = Retrofit.Builder()
+                .baseUrl(Constants.BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+
+            val serviceAPI = retroFit.create(WeatherServiceAPI::class.java)
+            val call = serviceAPI.getWeatherDetails(latitude, longitude, Constants.API_KEY,
+                Constants.METRIC_UNIT)
+
+            call.enqueue(object : Callback<WeatherResponse> {
+                override fun onResponse(call: Call<WeatherResponse>, response: Response<WeatherResponse>) {
+                    if (response.isSuccessful) {
+                        val weather = response.body()
+                        Log.d("WEATHER", weather.toString())
+                    } else {
+                        Log.e("WEATHER_ERROR", "Code: ${response.code()} - ${response.errorBody()?.string()}")
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Error Code: ${response.code()}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                }
+
+                override fun onFailure(call: Call<WeatherResponse>, t: Throwable) {
+                    // handle error
+                }
+            })
         }
         else{
             Toast.makeText(this@MainActivity, "Network Connection is NOT Available", Toast.LENGTH_SHORT).show()
