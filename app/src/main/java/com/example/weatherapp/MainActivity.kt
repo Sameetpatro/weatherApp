@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
     private val REQUEST_LOCATION_CODE = 200
     private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
 
-    // ✅ Store user data received from FirstLaunchActivity
+    //Store user data received from FirstLaunchActivity
     private var userName: String? = null
     private var userEmail: String? = null
 
@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        // ✅ Receive userName and userEmail passed from FirstLaunchActivity
+        //Receive userName and userEmail passed from FirstLaunchActivity
         userName = intent.getStringExtra("user_name")
         userEmail = intent.getStringExtra("user_email")
 
@@ -65,7 +65,7 @@ class MainActivity : AppCompatActivity() {
         val db = FirebaseFirestore.getInstance()
         Log.d("Firestore", "Firestore Initialized: $db")
 
-        // ✅ Update greeting message with user's name
+        //Update greeting message with user's name
         val greetingTextView = findViewById<TextView>(R.id.greetingText)
         greetingTextView.text = "Hey ${userName ?: "User"}, How's your day?"
 
@@ -161,10 +161,10 @@ class MainActivity : AppCompatActivity() {
                 if (response.isSuccessful && response.body() != null) {
                     val weather = response.body()!!
 
-                    // ✅ Update UI
+                    //Update UI
                     updateUI(weather)
 
-                    // ✅ Save user + weather info to Firestore
+                    //Save user + weather info to Firestore
                     saveUserWeatherData(weather, latitude, longitude)
                 } else {
                     Toast.makeText(this@MainActivity, "Error Code: ${response.code()}", Toast.LENGTH_SHORT).show()
@@ -230,7 +230,7 @@ class MainActivity : AppCompatActivity() {
                 locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }
 
-    // ✅ New function: save data to Firestore
+    //New function: save data to Firestore
     private fun saveUserWeatherData(weather: WeatherResponse, lat: Double, lon: Double) {
         // Create a Location object
         val location = Location("").apply {
@@ -238,7 +238,7 @@ class MainActivity : AppCompatActivity() {
             longitude = lon
         }
 
-        // ✅ Save user data to Firestore
+        //Save user data to Firestore
         FirestoreHelper.saveUserData(
             context = this,
             name = userName ?: "Unknown",
@@ -246,7 +246,7 @@ class MainActivity : AppCompatActivity() {
             location = location
         )
 
-        // ✅ Log location updates
+        //Log location updates
         FirestoreHelper.logLocationUpdate(
             email = userEmail ?: "No Email",
             location = location

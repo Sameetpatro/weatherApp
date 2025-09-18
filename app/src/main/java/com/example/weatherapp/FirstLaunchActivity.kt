@@ -26,7 +26,7 @@ class FirstLaunchActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // ✅ Save locally in SharedPreferences
+            //Save locally in SharedPreferences
             val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
             prefs.edit()
                 .putString("user_name", name)
@@ -34,10 +34,10 @@ class FirstLaunchActivity : AppCompatActivity() {
                 .putBoolean("first_run_done", true)
                 .apply()
 
-            // ✅ Show consent message
+            // Show consent message
             Toast.makeText(this, "You will receive weather updates on $email", Toast.LENGTH_LONG).show()
 
-            // ✅ Pass both name & email to MainActivity via Intent extras
+            //Pass both name & email to MainActivity via Intent extras
             val intent = Intent(this, MainActivity::class.java).apply {
                 putExtra("user_name", name)
                 putExtra("user_email", email)

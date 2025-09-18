@@ -15,10 +15,10 @@ class SplashActivity : AppCompatActivity() {
         val firstRunDone = prefs.getBoolean("first_run_done", false)
 
         if (firstRunDone) {
-            // ✅ User has already logged in before, go to main app
+            // User has already logged in before, go to main app
             startActivity(Intent(this, MainActivity::class.java))
         } else {
-            // ❌ First time user, show login screen
+            // First time user, show login screen
             startActivity(Intent(this, FirstLaunchActivity::class.java))
         }
 

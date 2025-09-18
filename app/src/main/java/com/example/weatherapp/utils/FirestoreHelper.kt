@@ -22,10 +22,10 @@ object FirestoreHelper {
         db.collection("users").document(userId)
             .set(userData)
             .addOnSuccessListener {
-                println("✅ User data saved successfully")
+                println("User data saved successfully")
             }
             .addOnFailureListener {
-                println("❌ Error saving user data: ${it.message}")
+                println("Error saving user data: ${it.message}")
             }
     }
 
@@ -42,10 +42,10 @@ object FirestoreHelper {
             .collection("locations")
             .add(updateData)
             .addOnSuccessListener {
-                println("📍 Location logged")
+                println("Location logged")
             }
             .addOnFailureListener {
-                println("⚠️ Failed to log location: ${it.message}")
+                println("Failed to log location: ${it.message}")
             }
     }
 }
