@@ -1,0 +1,24 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="120dp"
+    android:viewportWidth="200"
+    android:viewportHeight="120">
+
+    <!-- Big cloud -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,80
+                          c-30,0 -30,-50 20,-50
+                          c10,-30 60,-30 60,10
+                          c40,0 40,50 -40,50
+                          z"/>
+
+    <!-- Small cloud -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M120,60
+                          c-20,0 -20,-30 15,-30
+                          c7,-20 40,-20 40,7
+                          c25,0 25,30 -25,30
+                          z"/>
+</vector>

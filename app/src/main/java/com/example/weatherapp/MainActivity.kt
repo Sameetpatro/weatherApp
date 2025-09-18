@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
@@ -17,11 +18,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+//import com.example.weatherapp.utils.FirestoreHelper
+import com.example.weatherapp.utils.FirestoreHelper
 import com.example.weatherapp.model.WeatherResponse
 import com.example.weatherapp.utils.Constants
 import com.google.android.gms.location.*
+import com.google.firebase.FirebaseApp
+import com.google.firebase.firestore.FirebaseFirestore
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.Call
@@ -37,24 +40,43 @@ class MainActivity : AppCompatActivity() {
     private val REQUEST_LOCATION_CODE = 200
     private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
 
+    // ✅ Store user data received from FirstLaunchActivity
+    private var userName: String? = null
+    private var userEmail: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        Log.d("LOCATION_FLOW", "onCreate started")
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
+        // ✅ Receive userName and userEmail passed from FirstLaunchActivity
+        userName = intent.getStringExtra("user_name")
+        userEmail = intent.getStringExtra("user_email")
+
+        // If null, also try from SharedPreferences (backup)
+        val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        if (userName == null) userName = prefs.getString("user_name", "Unknown User")
+        if (userEmail == null) userEmail = prefs.getString("user_email", "No Email")
+
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
+        //Firebase declaration
+        FirebaseApp.initializeApp(this)
+        val db = FirebaseFirestore.getInstance()
+        Log.d("Firestore", "Firestore Initialized: $db")
+
+        // ✅ Update greeting message with user's name
+        val greetingTextView = findViewById<TextView>(R.id.greetingText)
+        greetingTextView.text = "Hey ${userName ?: "User"}, How's your day?"
+
+
         if (!isLocationEnabled()) {
-//            Log.e("LOCATION_FLOW", "Location services are disabled")
             Toast.makeText(this, "Location is NOT enabled", Toast.LENGTH_SHORT).show()
             startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
         } else {
-//            Log.d("LOCATION_FLOW", "Location services enabled, requesting permission")
             requestPermission()
         }
     }
-
 
     private fun requestPermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
@@ -84,8 +106,6 @@ class MainActivity : AppCompatActivity() {
         ) {
             Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show()
             requestLocationData()
-//            Log.d("PERMISSION_DEBUG", "Request code: $requestCode, Result: ${grantResults.joinToString()}")
-
         } else {
             Toast.makeText(this, "Permission Not Granted", Toast.LENGTH_SHORT).show()
         }
@@ -93,14 +113,11 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     private fun requestLocationData() {
-//        Log.d("LOCATION_FLOW", "requestLocationData() called")
-
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
             != PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
             != PackageManager.PERMISSION_GRANTED
         ) {
-//            Log.e("LOCATION_FLOW", "No permission to access location")
             return
         }
 
@@ -114,14 +131,8 @@ class MainActivity : AppCompatActivity() {
                     val lat = p0.lastLocation?.latitude
                     val lon = p0.lastLocation?.longitude
 
-//                    Log.d("LOCATION_FLOW", "Location callback triggered. Lat: $lat, Lon: $lon")
-//                    Log.d("LOCATION_CHECK", "Lat: $lat, Lon: $lon")
-
                     if (lat != null && lon != null) {
-//                        Log.d("API_DEBUG", "Calling weather API with lat: $lat, lon: $lon")
                         getLocationWeatherDetails(lat, lon)
-                    } else {
-//                        Log.e("LOCATION_FLOW", "Location is null")
                     }
                 }
             },
@@ -129,23 +140,19 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-
     private fun getLocationWeatherDetails(latitude: Double, longitude: Double) {
+
         if (!Constants.isNetworkAvailable(this)) {
             Toast.makeText(this, "Network Connection is NOT Available", Toast.LENGTH_SHORT).show()
-//            Log.e("API_ERROR", "No network connection.")
             return
         }
 
-        // Create Retrofit instance
         val retrofit = Retrofit.Builder()
             .baseUrl(Constants.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
         val serviceAPI = retrofit.create(WeatherServiceAPI::class.java)
-
-//        Log.d("API_DEBUG", "Requesting weather for lat: $latitude, lon: $longitude")
 
         val call = serviceAPI.getWeatherDetails(latitude, longitude, Constants.API_KEY, Constants.METRIC_UNIT)
 
@@ -154,71 +161,50 @@ class MainActivity : AppCompatActivity() {
                 if (response.isSuccessful && response.body() != null) {
                     val weather = response.body()!!
 
-                    // Log entire response to see raw data
-//                    Log.d("API_RESPONSE", "Raw weather data: ${weather}")
-
+                    // ✅ Update UI
                     updateUI(weather)
+
+                    // ✅ Save user + weather info to Firestore
+                    saveUserWeatherData(weather, latitude, longitude)
                 } else {
-                    val errorBody = response.errorBody()?.string()
-//                    Log.e("API_ERROR", "Code: ${response.code()}, Error: $errorBody")
                     Toast.makeText(this@MainActivity, "Error Code: ${response.code()}", Toast.LENGTH_SHORT).show()
                 }
             }
 
-
             override fun onFailure(call: Call<WeatherResponse>, t: Throwable) {
-//                Log.e("API_FAILURE", "Error: ${t.message}", t)
                 Toast.makeText(this@MainActivity, "API Call Failed: ${t.message}", Toast.LENGTH_LONG).show()
             }
         })
     }
 
-
     @SuppressLint("SetTextI18n")
     private fun updateUI(weather: WeatherResponse) {
-        // Weather condition (clear sky, rain, etc.)
         val condition = weather.weather.firstOrNull()?.description ?: "N/A"
         findViewById<TextView>(R.id.conditionText).text = condition
-
-        // Location (City name)
         findViewById<TextView>(R.id.locationText).text = weather.name ?: "Unknown Location"
-
-        // Date
         findViewById<TextView>(R.id.dateText).text = convertTime(weather.dt.toLong())
-
-        // Temperatures
         findViewById<TextView>(R.id.tempText).text = "${weather.main.temp}°C"
         findViewById<TextView>(R.id.maxTemp).text = "Max: ${weather.main.temp_max}°C"
         findViewById<TextView>(R.id.minTemp).text = "Min: ${weather.main.temp_min}°C"
-
-        // Humidity, Pressure, Wind
         findViewById<TextView>(R.id.humidityValue).text = "${weather.main.humidity}%"
         findViewById<TextView>(R.id.pressureValue).text = "${weather.main.pressure} hPa"
         findViewById<TextView>(R.id.windValue).text = "${weather.wind.speed} m/s"
-
-        // Sunrise & Sunset
         findViewById<TextView>(R.id.sunriseTime).text = convertTime(weather.sys.sunset.toLong())
         findViewById<TextView>(R.id.sunsetTime).text = convertTime(weather.sys.sunrise.toLong())
-
     }
 
-
     private fun convertTime(time: Long?): String {
-        if (time == null || time <= 0) return "N/A"  // 🚨 Avoid crashing
-
+        if (time == null || time <= 0) return "N/A"
         return try {
-            val date = Date(time * 1000L) // API gives seconds, we need milliseconds
+            val date = Date(time * 1000L)
             val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
             sdf.timeZone = TimeZone.getDefault()
             sdf.format(date)
         } catch (e: Exception) {
             e.printStackTrace()
-//            Log.e("TIME_CONVERT", "Error converting time: ${e.message}")
             "N/A"
         }
     }
-
-
 
     private fun showRequestDialog() {
         AlertDialog.Builder(this)
@@ -243,6 +229,28 @@ class MainActivity : AppCompatActivity() {
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
                 locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }
+
+    // ✅ New function: save data to Firestore
+    private fun saveUserWeatherData(weather: WeatherResponse, lat: Double, lon: Double) {
+        // Create a Location object
+        val location = Location("").apply {
+            latitude = lat
+            longitude = lon
+        }
+
+        // ✅ Save user data to Firestore
+        FirestoreHelper.saveUserData(
+            context = this,
+            name = userName ?: "Unknown",
+            email = userEmail ?: "No Email",
+            location = location
+        )
+
+        // ✅ Log location updates
+        FirestoreHelper.logLocationUpdate(
+            email = userEmail ?: "No Email",
+            location = location
+        )
+    }
+
 }
-
-

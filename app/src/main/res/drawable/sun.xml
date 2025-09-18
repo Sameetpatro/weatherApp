@@ -1,0 +1,48 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="150dp"
+    android:height="150dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <!-- Circle (Sun core) -->
+    <path
+        android:fillColor="#FFD740"
+        android:pathData="M50,10
+                          a40,40 0 1,0 0.1,0"/>
+
+    <!-- Sun rays -->
+    <group>
+        <path
+            android:strokeColor="#FFD740"
+            android:strokeWidth="4"
+            android:pathData="M50,0 L50,15"/>
+        <path
+            android:strokeColor="#FFD740"
+            android:strokeWidth="4"
+            android:pathData="M50,85 L50,100"/>
+        <path
+            android:strokeColor="#FFD740"
+            android:strokeWidth="4"
+            android:pathData="M0,50 L15,50"/>
+        <path
+            android:strokeColor="#FFD740"
+            android:strokeWidth="4"
+            android:pathData="M85,50 L100,50"/>
+        <path
+            android:strokeColor="#FFD740"
+            android:strokeWidth="4"
+            android:pathData="M15,15 L30,30"/>
+        <path
+            android:strokeColor="#FFD740"
+            android:strokeWidth="4"
+            android:pathData="M70,70 L85,85"/>
+        <path
+            android:strokeColor="#FFD740"
+            android:strokeWidth="4"
+            android:pathData="M15,85 L30,70"/>
+        <path
+            android:strokeColor="#FFD740"
+            android:strokeWidth="4"
+            android:pathData="M70,30 L85,15"/>
+    </group>
+</vector>

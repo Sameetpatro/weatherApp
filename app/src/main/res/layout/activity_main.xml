@@ -9,6 +9,29 @@
     android:background="@drawable/bg_gradient"
     tools:context="com.example.weatherapp.MainActivity">
 
+    <!-- Greeting Text -->
+    <TextView
+        android:id="@+id/greetingText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Hey User, How's your day?"
+        android:textColor="#FFFFFF"
+        android:textSize="25sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.03"
+        android:shadowColor="#60000000"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="80dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:gravity="center"/>
+
+
     <!-- Top Guideline (15% space) -->
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/topGuideline"
